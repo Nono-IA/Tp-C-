@@ -1,11 +1,19 @@
 
 #include <iostream>
 
-const int size = 5;
-int tab[size];
-int nb = 0;
+int *create(const int s)
+{
+    int *p = new int[s]; // initialisation d'un tableau dans la memoire dynamique
+    return p;
+    /*return new int[s];*/
+}
 
-void push(int a, int tab[size], int size, int &nb)
+void remove(int *p)
+{
+    delete[] p; // on libere la memoire (ici un tableau d'int)
+}
+
+void push(int a, int tab[], int size, int &nb)
 {
     if (nb < size)
     {
@@ -18,10 +26,10 @@ void push(int a, int tab[size], int size, int &nb)
     }
 }
 
-void print(int tab[size], int &nb)
+void print(int tab[], int &nb)
 {
     std::cout << "Le tableau est : [";
-    for(int i=0;i <= nb - 1;i++)
+    for (int i = 0; i <= nb - 1; i++)
     {
         std::cout << tab[i];
 
@@ -34,15 +42,15 @@ void print(int tab[size], int &nb)
     std::cout << "]" << std::endl;
 }
 
-int pop(int tab[size], int size, int &nb)
+int pop(int tab[], int size, int &nb)
 {
     int a = 0;
 
     if (nb > 0)
     {
-        a = tab[nb];
-        std::cout << "nombre retiré :" << tab[nb] << std::endl;
+        a = tab[nb - 1];
         nb = nb - 1;
+        std::cout << "nombre retiré :" << tab[nb] << std::endl;
     }
     else
     {
@@ -54,31 +62,35 @@ int pop(int tab[size], int size, int &nb)
 
 int main()
 {
+    int nb = 0;
+    const int size = 5;
+    int *tab = create(size);
     if (nb < size)
     {
-        print(tab,nb);
+        print(tab, nb);
         push(7, tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         push(8, tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         push(3, tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         push(2, tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         push(5, tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
 
         int p = pop(tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         pop(tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         pop(tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         pop(tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
         pop(tab, size, nb);
-        print(tab,nb);
+        print(tab, nb);
     }
+    remove(tab);
 
     return 0;
 }
