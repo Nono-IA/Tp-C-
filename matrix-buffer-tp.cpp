@@ -97,6 +97,16 @@ public:
         }
     }
 
+    Buffer *operator=(const Buffer &b)
+    {
+        if (this != &b)
+        {
+            size = b.size;
+            tab = b.tab;
+        }
+        return this;
+    }
+
     void set(int indice, double value = 0)
     {
         tab[indice] = value;
@@ -134,13 +144,27 @@ class Matrice
 private:
     int ligne;
     int colonne;
-    Buffer *m;
+
+    Buffer *b;
 
 public:
     Matrice(int l, int c, double value) : ligne(l), colonne(c)
     {
-        m = new Buffer(l * c, value);
-        m->count_users++; // on incrémente le compteur d'utilisateurs du buffer
+        b = new Buffer((l + 1) * (c + 1), value);
+        b->count_users++; // on incrémente le compteur d'utilisateurs du buffer
+    }
+
+    Matrice &operator=(const Matrice &s)
+    {
+        if (this != &s)
+        {
+            if (s.ligne * s.colonne != ligne * colonne)
+            {
+                throw std::length_error("operator= : taille incorrecte");
+            }
+            b = s.b;
+        }
+        return *this;
     }
 
     Matrice reshape(int rows, int colums)
@@ -151,29 +175,28 @@ public:
         }
         else
         {
-            ligne = rows;
-            colonne = colums;
-            m->count_users++; // on incrémente le compteur d'utilisateurs du buffer
-            return Matrice(*this);
+            Matrice m(rows, colums, 0.0);
+            m = *this;
+            return m;
         }
     }
 
     void set(int rows, int colums, double value)
     {
-        if (rows > ligne || colums > colonne)
+        if (rows >= ligne or colums >= colonne)
         {
             throw std::length_error("set : indice hors limite");
         }
-        m->set((rows - 1) * colonne + colums, value);
+        b->set(rows * colonne + colums, value);
     }
 
     double get(int rows, int colums)
     {
-        if (rows > ligne || colums > colonne)
+        if (rows >= ligne or colums >= colonne)
         {
             throw std::length_error("get : indice hors limite");
         }
-        return m->get((rows - 1) * colonne + colums - 1);
+        return b->get(rows * colonne + colums);
     }
 
     void print()
@@ -184,7 +207,7 @@ public:
             std::cout << "|";
             for (int j = 0; j < colonne; j++)
             {
-                std::cout << m->get(i * colonne + j) << '|';
+                std::cout << b->get(i * colonne + j) << '|';
             }
             std::cout << "\n";
         }
@@ -193,15 +216,15 @@ public:
 
     int get_count_users()
     {
-        return m->count_users;
+        return b->count_users;
     }
 
     ~Matrice()
     {
-        m->count_users--;
-        if (m->count_users == 0)
+        b->count_users--;
+        if (b->count_users == 0)
         {
-            delete m;
+            delete b;
         }
     }
 };
@@ -227,13 +250,13 @@ int main()
     //    try to remove the const to see the compilation error
     std::vector<double> values = read_doubles_from_file(filename);
     std::cout << "the values " << values.size() << std::endl;
-    std::cout << values.at(0) << std::endl;
+    std::cout << "\n";
 
     Matrice mat(3, 4, 0.0);
 
     for (int i = 0; i < values.size(); i++)
     {
-        mat.set(i / 4 + 1, i % 4, values[i]); // pour les float il convertit en int automatiquement
+        mat.set(i / 4, i % 4, values[i]); // pour les float il convertit en int automatiquement
         std::cout << values[i] << ", ";
     }
     std::cout << std::endl;
@@ -242,6 +265,7 @@ int main()
     std::cout << mat.get_count_users() << std::endl; // on verifie que le buffer n'a qu'un utilisateur
     Matrice mat1 = mat.reshape(4, 3);
     std::cout << mat1.get_count_users() << std::endl; // on verifie que le buffer a deux utilisateurs
+    mat1.print();
     mat.print();
 
     std::cout << mat1.get(2, 2) << std::endl;
@@ -250,6 +274,6 @@ int main()
     mat.set(2, 3, 10.0);
     mat.print();
     std::cout << mat.get(2, 3) << std::endl;
-    std::cout << mat.get(3, 2) << std::endl;
+    std::cout << mat.get_count_users() << std::endl; // on verifie que le buffer n'a qu'un utilisateur
     return 0;
 }
