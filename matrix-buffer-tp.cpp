@@ -163,6 +163,7 @@ public:
                 throw std::length_error("operator= : taille incorrecte");
             }
             b = s.b;
+            b->count_users++; // on incrémente le compteur d'utilisateurs du buffer
         }
         return *this;
     }
