@@ -150,7 +150,7 @@ private:
 public:
     Matrice(int l, int c, double value) : ligne(l), colonne(c)
     {
-        b = new Buffer((l + 1) * (c + 1), value);
+        b = new Buffer(l * c, value);
         b->count_users++; // on incrémente le compteur d'utilisateurs du buffer
     }
 
@@ -158,14 +158,17 @@ public:
     {
         if (this != &s)
         {
-            if (s.ligne * s.colonne != ligne * colonne)
-            {
-                throw std::length_error("operator= : taille incorrecte");
-            }
+            ligne = s.ligne;
+            colonne = s.colonne;
+            delete b;
             b = s.b;
-            b->count_users++; // on incrémente le compteur d'utilisateurs du buffer
+            b->count_users++;
         }
         return *this;
+    }
+    int flatten_index(int rows, int colums)
+    {
+        return rows * colonne + colums;
     }
 
     Matrice reshape(int rows, int colums)
@@ -177,7 +180,9 @@ public:
         else
         {
             Matrice m(rows, colums, 0.0);
-            m = *this;
+            delete m.b;
+            m.b = b;
+            b->count_users++;
             return m;
         }
     }
@@ -188,7 +193,7 @@ public:
         {
             throw std::length_error("set : indice hors limite");
         }
-        b->set(rows * colonne + colums, value);
+        b->set(flatten_index(rows, colums), value);
     }
 
     double get(int rows, int colums)
@@ -197,12 +202,12 @@ public:
         {
             throw std::length_error("get : indice hors limite");
         }
-        return b->get(rows * colonne + colums);
+        return b->get(flatten_index(rows, colums));
     }
 
     void print()
     {
-        std::cout << "\n";
+        std::cout << "[" << b->count_users << "]\n";
         for (int i = 0; i < ligne; i++)
         {
             std::cout << "|";
@@ -225,6 +230,7 @@ public:
         b->count_users--;
         if (b->count_users == 0)
         {
+            std::cout << "~Matrice";
             delete b;
         }
     }
@@ -241,9 +247,7 @@ int main()
 
     std::ofstream file(filename);
     file << "1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5\n";
-    // if you forgot to close the file, the data may not be written correctly in the file
-    // either you close it manually or you let the destructor do it automatically
-    //   by putting a block around the ofstream variable
+
     file.close();
 
     // we pass a string literal (const char []) to the function
@@ -252,29 +256,44 @@ int main()
     std::vector<double> values = read_doubles_from_file(filename);
     std::cout << "the values " << values.size() << std::endl;
     std::cout << "\n";
-
-    Matrice mat(3, 4, 0.0);
-
-    for (int i = 0; i < values.size(); i++)
+    if (true)
     {
-        mat.set(i / 4, i % 4, values[i]); // pour les float il convertit en int automatiquement
-        std::cout << values[i] << ", ";
+        Matrice mat(3, 4, 0.0);
+
+        for (int i = 0; i < values.size(); i++)
+        {
+            mat.set(i / 4, i % 4, values[i]);
+            std::cout << values[i] << ", ";
+        }
+        std::cout << std::endl;
+
+        if (true)
+        {
+            std::cout << "TEST " << std::endl;
+            std::cout << "mat :" << std::endl;
+            mat.print();
+            std::cout << "reshape 4x3 :" << std::endl;
+            Matrice mat1 = mat.reshape(4, 3);
+            std::cout << "mat1 aprés reshape :" << std::endl;
+            mat1.print();
+            std::cout << "mat aprés reshape de mat1 :" << std::endl;
+            mat.print();
+
+            std::cout << "get (2,2) :" << std::endl;
+            std::cout << "mat1 :" << std::endl;
+            std::cout << mat1.get(2, 2) << std::endl;
+            std::cout << "mat :" << std::endl;
+            std::cout << mat.get(2, 2) << std::endl;
+
+            std::cout << "modification de mat (2,3) à 10.0" << std::endl;
+            mat.set(2, 3, 10.0);
+            std::cout << "mat :" << std::endl;
+            mat.print();
+            std::cout << "mat (2,3) :" << std::endl;
+            std::cout << mat.get(2, 3) << std::endl;
+        }
+        std::cout << "count users :" << std::endl;
+        std::cout << mat.get_count_users() << std::endl;
     }
-    std::cout << std::endl;
-
-    mat.print();
-    std::cout << mat.get_count_users() << std::endl; // on verifie que le buffer n'a qu'un utilisateur
-    Matrice mat1 = mat.reshape(4, 3);
-    std::cout << mat1.get_count_users() << std::endl; // on verifie que le buffer a deux utilisateurs
-    mat1.print();
-    mat.print();
-
-    std::cout << mat1.get(2, 2) << std::endl;
-    std::cout << mat.get(2, 2) << std::endl;
-
-    mat.set(2, 3, 10.0);
-    mat.print();
-    std::cout << mat.get(2, 3) << std::endl;
-    std::cout << mat.get_count_users() << std::endl; // on verifie que le buffer n'a qu'un utilisateur
     return 0;
 }
