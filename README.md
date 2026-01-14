@@ -12,3 +12,5 @@
         list.cpp
 ### TP sur les matrice / Buffer
         matrix-buffer-tp.cpp
+### TP sur les arbre binaire
+        binary-tree-tp.cpp
